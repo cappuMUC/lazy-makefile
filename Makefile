@@ -13,22 +13,20 @@ OUTPUT = build/
 #add project files recursively
 SRCS  = $(shell find -type f -name *.c) 
 _OBJS = $(SRCS:.c=.o)
-#OBJS = $(addprefix $(OUTPUT), $(_OBJS))
 OBJS = $(subst ./, ./$(OUTPUT), $(_OBJS))
 
 
-all: pre dir $(TARGET)
+all: pre $(TARGET) post
 	@echo build finished!
 
-pre:
-	@echo $(OBJS)
+pre: env
 
-dir:
+post:
+
+# creating the build environment
+env:
 	@echo creating build environment
 	$(foreach src, $(SRCS), $(shell mkdir -p $(addprefix $(OUTPUT), $(dir $(src)))))
-	@echo test $(OBJS)
-	@echo $(_OBJS)
-
 
 
 $(TARGET):$(OBJS)
@@ -37,7 +35,7 @@ $(TARGET):$(OBJS)
 
 #%.o:%.c
 $(OBJS):$(OUTPUT)%.o:%.c
-	@echo creating $@ from $<
+	@echo generating $@ from $<
 	$(COMPILER_PATH)$(COMPILER_PREFIX)$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 
