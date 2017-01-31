@@ -1,7 +1,14 @@
 # compiler settings
 CC = gcc
-COMPILER_PREFIX = 
-COMPILER_PATH = 
+OBJECTCOPY =
+OBJECTDUMP = 
+OBJECTSIZE = 
+
+# settings for cross compile
+CC_PREFIX = 
+CC_PATH = 
+
+# settings for compilation and linking
 CFLAGS = -Wall -O0
 LDFLAGS =
 INCLUDES = -Iinc/
@@ -31,12 +38,12 @@ env:
 
 $(TARGET):$(OBJS)
 	@echo building target $@
-	$(COMPILER_PATH)$(COMPILER_PREFIX)$(CC) $(CFLAGS) $(INCLUDES) $(OBJS) -o $@
+	$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) $(OBJS) -o $@
 
-#%.o:%.c
+
 $(OBJS):$(OUTPUT)%.o:%.c
 	@echo generating $@ from $<
-	$(COMPILER_PATH)$(COMPILER_PREFIX)$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 
 clean:
