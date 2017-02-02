@@ -1,58 +1,88 @@
-# compiler settings
-CC = gcc
-OBJECTCOPY =
-OBJECTDUMP = 
-OBJECTSIZE = 
-
-# settings for cross compile
-CC_PREFIX = 
-CC_PATH = 
-
-# settings for compilation and linking
-CFLAGS = -Wall -O0
-LDFLAGS =
-INCLUDES = -Iinc/
-
-#definition of the build target
-TARGET:=test
-OUTPUT = build/
+include mkconfig/makefile_gcc.conf
 
 #add project files recursively
 SRCS  = $(shell find -type f -name *.c) 
 _OBJS = $(SRCS:.c=.o)
-OBJS = $(subst ./, ./$(OUTPUT), $(_OBJS))
+OBJS = $(subst ./, $(OUTPUT)/, $(_OBJS))
+
+#add project files recursively
+ASRCS  = $(shell find -type f -name *.s) 
+_AOBJS = $(ASRCS:.s=.o)
+AOBJS = $(subst ./, $(OUTPUT)/, $(_AOBJS))
 
 
-all: pre $(TARGET) post
+all: pre elf post
 	@echo build finished!
 
+
+.PHONY: elf
+elf: $(TARGET).elf
+
+
+.PHONY: hex
+hex: $(TARGET).hex
+
+
+.PHONY: bin
+bin: $(TARGET).bin
+
+
+.PHONY: pre
 pre: env
 
+
+.PHONY: post
 post:
 
 # creating the build environment
+
+.PHONY: env
 env:
 	@echo creating build environment
-	$(foreach src, $(SRCS), $(shell mkdir -p $(addprefix $(OUTPUT), $(dir $(src)))))
+	$(foreach OBJ, $(OBJS) $(AOBJS), $(shell mkdir -p  $(dir $(OBJ))))
 
 
-$(TARGET):$(OBJS)
+$(TARGET).elf: $(OBJS) $(AOBJS)
 	@echo building target $@
-	$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) $(OBJS) -o $@
+	$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES) $^ -o $@
 
 
-$(OBJS):$(OUTPUT)%.o:%.c
+$(TARGET).hex: $(TARGET).elf
+	@echo creating .hex from .elf target
+	$(OBJECTCOPY) -Oihex $< $@
+
+
+$(TARGET).bin: $(TARGET).elf
+	@echo creating .bin from .elf target
+	$(OBJECTCOPY) -Obinary $< $@
+
+
+$(OBJS): $(OUTPUT)/%.o:%.c
 	@echo generating $@ from $<
-	$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	@$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(OFLAGS) $(DFLAGS) $(INCLUDES) -c -o $@ $<
+
+$(AOBJS): $(OUTPUT)/%.o:%.s
+	@echo generating $@ from $<
+	$(CC_PATH)$(CC_PREFIX)$(AS) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 
+.PHONY: clean
 clean:
-	@echo cleaning project
+	@echo cleaning build objects
+	@echo ----------------------
+	@echo removing $(OBJS) $(AOBJS)
+	@rm $(OBJS) $(AOBJS)
+	@echo 
+	@echo cleaning targets
 	@echo ----------------
-	@echo removing objects
-	@echo $(OBJS)
+	@echo removing binaries for target: $(TARGET)
 	@echo removing target
-	@echo $(TARGET)
-	@rm $(OBJS)
-	@rm $(TARGET)
+	@rm $(TARGET).*
+
+
+.PHONY: distclean
+distclean:
+	@echo removing target folder
+	@rm -rf $(OUTPUT)
+
 
