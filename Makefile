@@ -10,6 +10,13 @@ ASRCS  = $(shell find -type f -name *.s)
 _AOBJS = $(ASRCS:.s=.o)
 AOBJS = $(subst ./, $(OUTPUT)/, $(_AOBJS))
 
+# create a list of all build objects
+OBJECTS= $(OBJS)
+OBJECTS+= $(AOBJS)
+
+# creating list of object directories
+# duplicates are removed
+OBJECTDIRS = $(sort $(dir $(OBJECTS)))
 
 all: pre elf hex bin post
 	@echo build finished!
@@ -40,9 +47,13 @@ post: $(TARGET).hex
 
 # creating the build environment
 .PHONY: env
-env:
+env:$(OBJECTDIRS)
 	@echo creating build environment
-	$(foreach OBJDIR, $ $(dir $(OBJS) $(AOBJS)), @mkdir -pv $(OBJDIR))
+
+
+$(OBJECTDIRS):
+	@echo creating directory $@
+	mkdir -p $@
 
 
 $(TARGET).elf: $(OBJS) $(AOBJS)
