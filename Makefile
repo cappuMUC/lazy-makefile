@@ -11,35 +11,38 @@ _AOBJS = $(ASRCS:.s=.o)
 AOBJS = $(subst ./, $(OUTPUT)/, $(_AOBJS))
 
 
-all: pre elf post
+all: pre elf hex bin post
 	@echo build finished!
 
-
+#compile the project to an .elf file
 .PHONY: elf
 elf: $(TARGET).elf
 
-
+#convert the .elf file to an intel hex format
 .PHONY: hex
 hex: $(TARGET).hex
 
-
+#convert the .elf file to a binary format
 .PHONY: bin
 bin: $(TARGET).bin
 
-
+#create the build environment
 .PHONY: pre
 pre: env
 
-
+#show the filesize of the binary
 .PHONY: post
-post:
+post: $(TARGET).hex
+	@echo Size of $<
+	@echo ------------------------------------------------------
+	$(OBJECTSIZE) $<
+	@echo ------------------------------------------------------
 
 # creating the build environment
-
 .PHONY: env
 env:
 	@echo creating build environment
-	$(foreach OBJ, $(OBJS) $(AOBJS), $(shell mkdir -p  $(dir $(OBJ))))
+	$(foreach OBJDIR, $ $(dir $(OBJS) $(AOBJS)), @mkdir -pv $(OBJDIR))
 
 
 $(TARGET).elf: $(OBJS) $(AOBJS)
