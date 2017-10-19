@@ -113,3 +113,4 @@ distclean: clean
 	@echo removing target folder
 	@rm -rf obj bin
 
+.SECONDARY: $(addprefix obj/, $(OBJS))
