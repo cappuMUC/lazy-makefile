@@ -95,14 +95,14 @@ clean:
 	@echo cleaning build objects
 	@echo ----------------------
 	@echo removing $(OBJS) 
-	@rm obj/*
+	@rm -f obj/*
 	
 	@echo 
 	@echo cleaning targets
 	@echo ----------------
 	@echo removing binaries for target: $(TARGET)
 	@echo removing target
-	@rm bin/*
+	@rm -f bin/*
 
 
 .PHONY: distclean
