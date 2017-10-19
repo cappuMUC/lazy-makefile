@@ -23,31 +23,37 @@ OBJS= $(COBJS)
 OBJS+= $(AOBJS)
 
 
+# MAKE Targets
+#-------------------------------------------------------
+
 all: pre elf hex bin post
-	@echo build finished!
+	@echo build of target $(TARGET) finished!
 
-test: OUTPUT = test
+
+.PHONY: test
 test: DFLAGS+= -DTESTING
-test: pre elf hex bin post
-	@echo build finished!
-
+test: clean all run
+	@echo test
 
 #compile the project to an .elf file
 .PHONY: elf
-elf: $(addprefix bin/, $(TARGET).elf )
+elf: bin/$(TARGET).elf
 
 #convert the .elf file to an intel hex format
 .PHONY: hex
-hex: $(addprefix bin/, $(TARGET).hex )
+hex: bin/$(TARGET).hex 
 
 #convert the .elf file to a binary format
 .PHONY: bin
-bin: $(addprefix bin/, $(TARGET).bin )
+bin: bin/$(TARGET).bin
 
 #create the build environment
 .PHONY: pre
 pre: env
 
+.PHONY: run
+run:
+	@./bin/$(TARGET).elf
 
 #show the filesize of the binary
 .PHONY: post
@@ -60,23 +66,22 @@ post: $(TARGET).hex
 # creating the build environment
 .PHONY: env
 env:
-	@echo Hallo $(USER)
-	@echo creating build environment
+	@echo creating build environment for $(TARGET)
 	@echo creating directories bin, obj
 	mkdir -p bin obj 
 
 
-bin/$(TARGET).elf: $(addprefix obj/, $(OBJS))
+bin/%.elf: $(addprefix obj/, $(OBJS))
 	@echo building target $@
 	$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES)  $^ -o $@
 
 
-bin/$(TARGET).hex: $(addprefix bin/, $(TARGET).elf)
+bin/%.hex:bin/%.elf
 	@echo creating .hex from .elf target
 	$(OBJECTCOPY) -Oihex $< $@
 
 
-bin/$(TARGET).bin: $(addprefix bin/, $(TARGET).elf)
+bin/%.bin:bin/%.elf
 	@echo creating .bin from .elf target
 	$(OBJECTCOPY) -Obinary $< $@
 
@@ -96,12 +101,10 @@ clean:
 	@echo ----------------------
 	@echo removing $(OBJS) 
 	@rm -f obj/*
-	
 	@echo 
 	@echo cleaning targets
 	@echo ----------------
-	@echo removing binaries for target: $(TARGET)
-	@echo removing target
+	@echo removing target binaries
 	@rm -f bin/*
 
 
