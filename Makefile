@@ -12,7 +12,9 @@ _AOBJS = $(ASRCS:.s=.o)
 AOBJS = $(notdir $(_AOBJS))
 
 #set vpath to search for objects
-VPATH = $(dir $(CSRCS)) 
+VPATH = ./obj
+VPATH+= ./bin
+VPATH+= $(dir $(CSRCS)) 
 VPATH+= $(dir $(ASRCS))
 
 
@@ -24,21 +26,28 @@ OBJS+= $(AOBJS)
 all: pre elf hex bin post
 	@echo build finished!
 
+test: OUTPUT = test
+test: DFLAGS+= -DTESTING
+test: pre elf hex bin post
+	@echo build finished!
+
+
 #compile the project to an .elf file
 .PHONY: elf
-elf: $(TARGET).elf
+elf: $(addprefix bin/, $(TARGET).elf )
 
 #convert the .elf file to an intel hex format
 .PHONY: hex
-hex: $(TARGET).hex
+hex: $(addprefix bin/, $(TARGET).hex )
 
 #convert the .elf file to a binary format
 .PHONY: bin
-bin: $(TARGET).bin
+bin: $(addprefix bin/, $(TARGET).bin )
 
 #create the build environment
 .PHONY: pre
 pre: env
+
 
 #show the filesize of the binary
 .PHONY: post
@@ -51,33 +60,34 @@ post: $(TARGET).hex
 # creating the build environment
 .PHONY: env
 env:
+	@echo Hallo $(USER)
 	@echo creating build environment
-	@echo creating directory $(OUTPUT)
-	mkdir -p $(OUTPUT)
+	@echo creating directories bin, obj
+	mkdir -p bin obj 
 
 
-$(TARGET).elf: $(OBJS) 
+bin/$(TARGET).elf: $(addprefix obj/, $(OBJS))
 	@echo building target $@
-	$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES)  $(addprefix $(OUTPUT)/, $^) -o $@
+	$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES)  $^ -o $@
 
 
-$(TARGET).hex: $(TARGET).elf
+bin/$(TARGET).hex: $(addprefix bin/, $(TARGET).elf)
 	@echo creating .hex from .elf target
 	$(OBJECTCOPY) -Oihex $< $@
 
 
-$(TARGET).bin: $(TARGET).elf
+bin/$(TARGET).bin: $(addprefix bin/, $(TARGET).elf)
 	@echo creating .bin from .elf target
 	$(OBJECTCOPY) -Obinary $< $@
 
 
-%.o:%.c
+obj/%.o:%.c
 	@echo generating $@ from $<
-	@$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(OFLAGS) $(DFLAGS) $(INCLUDES) -c -o $(OUTPUT)/$@ $<
+	@$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(OFLAGS) $(DFLAGS) $(INCLUDES) -c -o $@ $<
 
-%.o:%.s
+obj/%.o:%.s
 	@echo generating $@ from $<
-	@$(CC_PATH)$(CC_PREFIX)$(AS) $(CFLAGS) $(INCLUDES) -c -o $(OUTPUT)/$@ $<
+	@$(CC_PATH)$(CC_PREFIX)$(AS) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 
 .PHONY: clean
@@ -85,17 +95,18 @@ clean:
 	@echo cleaning build objects
 	@echo ----------------------
 	@echo removing $(OBJS) 
-	@rm $(OUTPUT)/*.o
+	@rm obj/*
+	
 	@echo 
 	@echo cleaning targets
 	@echo ----------------
 	@echo removing binaries for target: $(TARGET)
 	@echo removing target
-	@rm $(TARGET).*
+	@rm bin/*
 
 
 .PHONY: distclean
-distclean:
+distclean: clean
 	@echo removing target folder
-	@rm -rf $(OUTPUT)
+	@rm -rf obj bin
 
