@@ -4,23 +4,27 @@ include mkconfig/makefile_gcc.conf
 CSRCS  = $(shell find -type f -name *.c) 
 _COBJS = $(CSRCS:.c=.o)
 COBJS = $(notdir $(_COBJS))
-
+CDIRS = $(dir $(sort $(_COBJS)))
 
 #add .s files recursively
 ASRCS  = $(shell find -type f -name *.s) 
 _AOBJS = $(ASRCS:.s=.o)
 AOBJS = $(notdir $(_AOBJS))
+ADIRS = $(dir $(sort $(_AOBJS)))
 
 #set vpath to search for objects
 VPATH = ./obj
-VPATH+= ./bin
-VPATH+= $(dir $(CSRCS)) 
-VPATH+= $(dir $(ASRCS))
+VPATH += ./bin
+VPATH += $(dir $(CSRCS)) 
+VPATH += $(dir $(ASRCS))
 
+
+IFLAGS = $(addprefix -I, $(CDIRS))
+IFLAGS += $(INCLUDES)
 
 # create a list of all build objects
-OBJS= $(COBJS)
-OBJS+= $(AOBJS)
+OBJS = $(COBJS)
+OBJS += $(AOBJS)
 
 
 # MAKE Targets
@@ -73,7 +77,7 @@ env:
 
 bin/%.elf: $(addprefix obj/, $(OBJS))
 	@echo building target $@
-	$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(LDFLAGS) $(INCLUDES)  $^ -o $@
+	$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(LDFLAGS) $(IFLAGS)  $^ -o $@
 
 
 bin/%.hex:bin/%.elf
@@ -88,11 +92,12 @@ bin/%.bin:bin/%.elf
 
 obj/%.o:%.c
 	@echo generating $@ from $<
-	@$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(OFLAGS) $(DFLAGS) $(INCLUDES) -c -o $@ $<
+	@$(CC_PATH)$(CC_PREFIX)$(CC) $(CFLAGS) $(OFLAGS) $(DFLAGS) $(IFLAGS) -c -o $@ $<
+
 
 obj/%.o:%.s
 	@echo generating $@ from $<
-	@$(CC_PATH)$(CC_PREFIX)$(AS) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	@$(CC_PATH)$(CC_PREFIX)$(AS) $(CFLAGS) $(IFLAGS) -c -o $@ $<
 
 
 .PHONY: clean
